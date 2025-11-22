@@ -1,0 +1,48 @@
+{
+  "emotion": {
+    "labels": [
+      "natural",
+      "happy",
+      "sad",
+      "angry",
+      "fear",
+      "surprised"
+    ],
+    "prompt": "\n    Please analyze the emotion of the speech audio.\n    Rules:\n        1. The emotion labels are limited to the following six types:\n            • natural\n            • happy\n            • sad\n            • angry\n            • fear\n            • surprised\n        2. Do not consider the semantic meaning or content of the audio.\n        3. Must directly output in standard JSON format, Example:\n            • {{\"emotion\":\"angry\"}}\n    "
+  },
+  "style": {
+    "labels": [
+      "child",
+      "exaggerated",
+      "recite",
+      "generous",
+      "act_coy",
+      "older",
+      "whisper"
+    ],
+    "prompt": "Task: Analyze the audio and identify its vocal style based on delivery quality and authenticity.\n\nCRITICAL EVALUATION PRINCIPLES:\n1. Style identification requires BOTH appropriate characteristics AND skillful execution\n2. Poor delivery, awkward pacing, or unnatural performance should default to \"normal\" or \"None\"\n3. Prioritize delivery authenticity over superficial acoustic features\n4. A style label should only be assigned when the performance clearly demonstrates that style\n\nStyle Definitions:\n- normal: Natural, neutral conversational tone without distinctive stylistic features, OR any audio with unclear/poor stylistic execution\n- serious (严肃): Formal, solemn tone with restrained emotion and controlled delivery\n- arrogant (傲慢): Confident, condescending superior attitude with deliberate vocal swagger\n- child (儿童): AUTHENTIC child speaker with ALL of these natural characteristics:\n  * Age-appropriate vocal physiology (not just high pitch)\n  * Spontaneous, unscripted speech patterns\n  * Natural cognitive-linguistic development markers\n  * Genuine emotional expression without performance awareness\n  * REJECT if: stiff delivery, reading-like cadence, or adult attempting child voice\n- exaggerated (夸张): Intentionally dramatic, over-the-top expression with clear performative skill\n- recite (朗诵): Professional-quality rhythmic delivery with clear artistic interpretation\n- sweet (甜美): Naturally gentle, warm tone (not forced or affected)\n- ethereal (空灵): Skillfully executed light, airy, otherworldly quality with artistic control\n- generous (豪爽): Genuinely bold, hearty expression with natural confidence\n- act_cute (撒娇): Skilled, intentional coquettish performance by mature speaker:\n  * Deliberate vocal affectation executed with social awareness\n  * Natural flow and convincing delivery\n  * REJECT if: awkward, stiff, or poorly executed attempt\n- roar (吼叫): Powerful, controlled shouting with clear emotional intent\n- older (中老年): AUTHENTIC mature/elderly speaker with natural age markers:\n  * Genuine physiological vocal aging (breathiness, reduced range, voice quality changes)\n  * Age-appropriate speech patterns and rhythm\n  * REJECT if: young/middle-aged voice with affected \"old\" characteristics\n  * REJECT if: simply slow or monotone delivery without true aging markers\n- whisper (ASMR): Breathy, air-filled vocal delivery with audible breath sounds (not just quiet volume)\n- murmur (悄悄话): Natural secretive, conspiratorial tone with appropriate intimate quality\n\nRED FLAGS - Default to \"normal\" or \"None\" if present:\n- Stiff, robotic, or awkward delivery\n- Obvious reading/TTS-like cadence\n- Inconsistent or unconvincing style execution\n- Forced or unnatural vocal affectation\n- Poor audio quality obscuring style assessment\n- Ambiguous or mixed style signals\n\nSPECIAL ATTENTION for English Audio:\n- English prosody differs from Chinese - avoid over-identifying styles based on pitch alone\n- Verify that perceived style matches natural English speech patterns\n- Be especially strict with \"child\", \"older\", and \"act_cute\" - these require authentic markers\n- High pitch alone ≠ child voice; low/slow delivery alone ≠ older voice\n\nEvaluation Process:\n1. Assess overall delivery quality and naturalness\n2. Check for RED FLAGS - if present, lean toward \"normal\" or \"None\"\n3. Identify candidate style based on acoustic and prosodic features\n4. VERIFY: Is this style clearly and skillfully executed?\n5. VERIFY: Does the delivery sound natural and authentic for this style?\n6. If verification fails, return \"normal\" or \"None\"\n\nOutput Format:\nReturn ONLY valid JSON:\n{\"style\": \"serious\"}\n\nor\n\n{\"style\": \"None\"}\n\nWhen uncertain or when delivery quality is questionable, prefer \"None\" over misclassification.\n"
+  },
+"paralinguistic": {
+    "tag_map": {
+      "[Breathing]": "[呼吸声]",
+      "[Laughter]": "[笑声]",
+      "[Cough]": "[咳嗽声]",
+      "[Sigh]": "[叹气声]",
+      "[Crying]": "[哭泣声]",
+      "[Uhm]": "[犹豫声]",
+      "[Shh]": "[安静声]",
+      "[Confirmation-en]": "[确认声-嗯]",
+      "[Question-en]": "[疑问声-嗯?]",
+      "[Question-ah]": "[疑问声-啊?]",
+      "[Question-oh]": "[疑问声-哦?]",
+      "[Question-ei]": "[疑问声-诶?]",
+      "[Question-yi]": "[疑问声-咦?]",
+      "[Surprise-ah]": "[惊讶声-啊!]",
+      "[Surprise-oh]": "[惊讶声-哦!]",
+      "[Surprise-wa]": "[惊讶声-哇!]",
+      "[Surprise-yo]": "[惊讶声-哟!]",
+      "[Dissatisfaction-hnn]": "[不满声-哼]"
+    },
+    "prompt_template": "你是一个对音频质量有着敏锐洞察力的“微观质量”评估专家 (Micro-Quality Inspector)。\n\n你的任务是**只**评估音频中几个**特定时间点**的质量。\n\n---\n**!!! 警告：已知的错误画像 !!!**\n\n你将评估的模型有一个**最常见**的失败模式：**“不作为”（Omission）**。\n\n意味着，失败的音频**听起来会非常平滑、流畅**，没有任何爆音或卡顿。\n**但是，它会完全“忘记”插入指令中的副语言标签（例如 [呼吸声] 或 [笑声]），或者插入的声音微弱到几乎听不见。**\n\n因此，你的**首要任务**是**“主动搜索”**“考点”中的声音是否存在。\n**一个听起来很“平滑”但“缺少”了目标声音的音频，是 1 分的失败品（见下），绝不能给高分。**\n---\n\n**--- 评估目标 (你的主动搜索清单) ---**\n\n**1. 目标文本:**\n`{translated_generated_text}`\n\n**2. 重点检查考点 (你必须逐一主动搜索):**\n{checklist_for_prompt}\n\n**--- 评分标准 (1-3分) ---**\n**!!! 评审要求：你必须极度严格 !!!**\n**“3分”代表“绝对完美”。任何形式的缺陷（包括轻微瑕疵）都必须被降级到 2 分。**\n\n**请按以下规则严格打分 (从 1 分开始检查)：**\n\n* **1分 (失败 - 不作为):**\n    * *存在以下任意一项：*\n    * (a) **所有**“考点”的声音都**完全缺失 (听不见)**。\n    * (b) *或者* **所有**“考点”的标签都出现在了**错误的位置**。\n    * *(备注：这是最坏的情况，模型完全没有执行。)*\n\n* **2分 (有缺陷 - 任何形式的不完美):**\n    * *所有 1 分的情况都不满足，但存在以下任意一项：*\n    * (a) **部分遗漏/错位:** *至少一个*“考点”的声音**完全缺失**或**位置错误**。\n    * (b) **感知困难:** *至少一个*“考点”的声音**过于微弱/模糊**。\n    * (c) **衔接明显瑕疵:** *至少一个*“考点”的衔接有*明显*瑕疵（响亮的爆音、卡顿）。\n    * (d) **衔接轻微瑕疵:** *至少一个*“考点”的衔接有*轻微*瑕疵（如轻微点击声）。\n    * *(备注：任何一个“考点”执行失败、质量较差、或*有轻微瑕疵*，都只能得 2 分。)*\n\n* **3分 (完美 - 零缺陷):**\n    * *所有 1 分和 2 分的情况都不满足。*\n    * (a) *所有*“考点”的声音都**清晰可闻、音量适中**。\n    * (b) *所有*“考点”的*位置*都准确无误。\n    * (c) *所有*“考点”的衔接都**无缝**，完全无法察觉。\n    * *(备注：必须 100% 完美才能获得 3 分。)*\n\n---\n你的回答**只能**是一个 1 到 3 之间的数字，请务必严格评判。\n"
+  }
+}
